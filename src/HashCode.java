@@ -28,13 +28,15 @@ class Library {
     private final Integer id;
     private ArrayList<Integer> booksIds;
     private HashMap<Integer, Integer> booksIdScore;
-    private final int scanTime;
+    private final int signupTime;
     private final int booksPerDay;
+    private final int totalNumberOfDays;
 
-    Library(Integer id, String[] books, String[] booksScore, int scanTime, int booksPerDay) {
+    Library(Integer id, String[] books, String[] booksScore, int scanTime, int booksPerDay, int totalNumberOfDays) {
         this.id = id;
-        this.scanTime = scanTime;
+        this.signupTime = scanTime;
         this.booksPerDay = booksPerDay;
+        this.totalNumberOfDays = totalNumberOfDays;
 
         this.booksIds = new ArrayList<Integer>();
         this.booksIdScore = new HashMap<Integer, Integer>();
@@ -56,7 +58,7 @@ class Library {
             bookScoreSum += bookScore;
         }
 
-        return bookScoreSum + this.booksIds.size() / this.booksPerDay - Math.pow(2, this.scanTime);
+        return 0.5 * bookScoreSum + 0.5 * this.signupTime /  this.totalNumberOfDays; //- Math.pow(2, this.signupTime);
     }
 
     public Integer getId() {
@@ -85,11 +87,11 @@ class Library {
 public class HashCode {
 
     public static void main(String[] args) throws IOException {
-        final String inputFileName = "./data/a_example.txt";
-        final String outputFileName = "./data/solution-a.txt";
+        final String inputFileName = "./data/c_incunabula.txt";
+        final String outputFileName = "./data/solution-c.txt";
 
         int bookNumber = 0;
-        int maxDays = 0;
+        int totalNumberOfDays = 0;
         ArrayList<Library> libraries = new ArrayList<>();
 
         try {
@@ -101,7 +103,7 @@ public class HashCode {
                 String[] description = nextLine.split(" ");
                 bookNumber = Integer.parseInt(description[0]);
                 int libraryNumber = Integer.parseInt(description[1]);
-                maxDays = Integer.parseInt(description[2]);
+                totalNumberOfDays = Integer.parseInt(description[2]);
 
                 nextLine = dataset_reader.nextLine();
                 String[] bookScore = nextLine.split(" ");
@@ -117,7 +119,7 @@ public class HashCode {
                     nextLine = dataset_reader.nextLine();
                     String[] booksIds = nextLine.split(" ");
 
-                    Library library = new Library(i, booksIds, bookScore, signupTime, booksPerDay);
+                    Library library = new Library(i, booksIds, bookScore, signupTime, booksPerDay, totalNumberOfDays);
                     libraries.add(library);
                 }
             }
@@ -133,32 +135,34 @@ public class HashCode {
             writer.write(libraries.size() + "\n");
             int libraryCount = 0;
             for (Library library : libraries) {
-                try {
-                    writer.write(library.getId() + " " + library.getBooksIds().size() + "\n");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                ArrayList<Integer> bookIdsSorted = library.getBooksIds();
-                bookIdsSorted.sort(Comparator.comparing(libraryId -> library.getBooksScore().get(libraryId)));
-
-                String sortedBookLine = "";
-                for (Integer bookId : bookIdsSorted) {
-                    sortedBookLine = sortedBookLine.concat(bookId + " ");
-                }
-
-                try {
-                    writer.write(sortedBookLine.trim() + "\n");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                // remove books previously sent
                 libraryCount += 1;
-                libraries.subList(libraryCount, libraries.size()).forEach(library1 -> {
-                    library1.removeBooks(library.getBooksIds());
-                });
+                if (library.getBooksIds().size() > 0) {
 
+                    try {
+                        writer.write(library.getId() + " " + library.getBooksIds().size() + "\n");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    ArrayList<Integer> bookIdsSorted = library.getBooksIds();
+                    bookIdsSorted.sort(Comparator.comparing(libraryId -> library.getBooksScore().get(libraryId)));
+
+                    String sortedBookLine = "";
+                    for (Integer bookId : bookIdsSorted) {
+                        sortedBookLine = sortedBookLine.concat(bookId + " ");
+                    }
+
+                    try {
+                        writer.write(sortedBookLine.trim() + "\n");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    // remove books previously sent
+                    libraries.subList(libraryCount, libraries.size()).forEach(library1 -> {
+                        library1.removeBooks(library.getBooksIds());
+                    });
+                }
             }
 
             writer.close();
