@@ -1,10 +1,7 @@
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Scanner;
+import java.util.*;
 
 class Global {
     static int averageFirstComponent = 0;
@@ -69,7 +66,8 @@ class Library {
     }
 
     public Double getSecondComponent() {
-        return (double) this.totalNumberOfDays / (double) this.signupTime;
+//        return (double) this.totalNumberOfDays / (double) this.signupTime;
+        return 0.0;
     }
 
     public void calculateSum() {
@@ -83,8 +81,9 @@ class Library {
 //        System.out.println("Second component");
 //        System.out.println(secondComponent);
 
-        return 0.5 * ((getFirstComponent() - Global.averageFirstComponent) / Global.stdFirstComponent) +
-                0.5 * ((getSecondComponent() - Global.averageSecondComponent) / Global.stdSecondComponent); //- Math.pow(2, this.signupTime);
+//        return 0.5 * ((getFirstComponent() - Global.averageFirstComponent) / Global.stdFirstComponent) +
+//                0.5 * ((getSecondComponent() - Global.averageSecondComponent) / Global.stdSecondComponent); //- Math.pow(2, this.signupTime);
+        return 0.5 * getFirstComponent() + 0.5 * getSecondComponent();
     }
 
     public Integer getId() {
@@ -99,7 +98,7 @@ class Library {
         return booksIdScore;
     }
 
-    public void removeBooks(ArrayList<Integer> booksIdsToRemove) {
+    public void removeBooks(List<Integer> booksIdsToRemove) {
         ArrayList<Integer> oldBooksIds = this.getBooksIds();
         for (Integer id : booksIdsToRemove) {
             if (oldBooksIds.contains(id)) {
@@ -113,23 +112,26 @@ class Library {
 public class HashCode {
 
     public static void main(String[] args) throws IOException {
-        final String inputFileName = "./data/b_read_on.txt";
-        final String outputFileName = "./data/solution-b.txt";
+        final String inputFileName = "./data/e_so_many_books.txt";
+        final String outputFileName = "./data/solution-e.txt";
 
         int bookNumber = 0;
         int totalNumberOfDays = 0;
         ArrayList<Library> libraries = new ArrayList<>();
+        int maxNumberOfBooksToTake = 0;
 
         try {
             File dataset = new File(inputFileName);
             Scanner dataset_reader = new Scanner(dataset);
 
-            while (dataset_reader.hasNextLine()) {
+            if (dataset_reader.hasNextLine()) {
                 String nextLine = dataset_reader.nextLine();
                 String[] description = nextLine.split(" ");
                 bookNumber = Integer.parseInt(description[0]);
                 int libraryNumber = Integer.parseInt(description[1]);
                 totalNumberOfDays = Integer.parseInt(description[2]);
+
+                maxNumberOfBooksToTake = (int) (bookNumber * 0.7);
 
                 nextLine = dataset_reader.nextLine();
                 String[] bookScore = nextLine.split(" ");
@@ -155,19 +157,19 @@ public class HashCode {
 
         FileWriter writer = new FileWriter(outputFileName);
 
-        libraries.forEach(Library::calculateSum);
-        int size = libraries.size();
-        Global.averageFirstComponent = Global.averageFirstComponent / size;
-        Global.averageSecondComponent = Global.averageSecondComponent / size;
-        double firstComponentStd = 0;
-        double secondComponentStd = 0;
-        for (Library library : libraries) {
-            firstComponentStd += Math.pow(library.getFirstComponent() - Global.averageFirstComponent, 2);
-            secondComponentStd += Math.pow(library.getSecondComponent() - Global.averageSecondComponent, 2);
-        }
-        Global.stdFirstComponent = Math.sqrt(firstComponentStd / size);
-        Global.stdSecondComponent = Math.sqrt(secondComponentStd / size);
-        libraries.sort(Comparator.comparing(Library::getLibraryScore));
+//        libraries.forEach(Library::calculateSum);
+//        int size = libraries.size();
+//        Global.averageFirstComponent = Global.averageFirstComponent / size;
+//        Global.averageSecondComponent = Global.averageSecondComponent / size;
+//        double firstComponentStd = 0;
+//        double secondComponentStd = 0;
+//        for (Library library : libraries) {
+//            firstComponentStd += Math.pow(library.getFirstComponent() - Global.averageFirstComponent, 2);
+//            secondComponentStd += Math.pow(library.getSecondComponent() - Global.averageSecondComponent, 2);
+//        }
+//        Global.stdFirstComponent = Math.sqrt(firstComponentStd / size);
+//        Global.stdSecondComponent = Math.sqrt(secondComponentStd / size);
+        libraries.sort(Comparator.comparing(x -> -x.getLibraryScore()));
 
         try {
             writer.write(libraries.size() + "\n");
@@ -175,55 +177,55 @@ public class HashCode {
 
             while (libraries.size() > 0) {
                 Library library = libraries.get(0);
+
+                // Omit libraries without books
                 if (library.getBooksIds().size() > 0) {
+                    // This library we are writing it
                     realLibraryCount += 1;
 
+                    // Sort by books with more score
+                    ArrayList<Integer> bookIdsSorted = library.getBooksIds();
+                    bookIdsSorted.sort(Comparator.comparing(libraryId -> library.getBooksScore().get(libraryId)));
+
+                    List<Integer> booksToTake = bookIdsSorted.subList(0, bookIdsSorted.size());
+
+                    if (bookIdsSorted.size() > maxNumberOfBooksToTake) {
+                        booksToTake = booksToTake.subList(0, maxNumberOfBooksToTake);
+                    }
+
+                    // Show library id and number of books
                     try {
-                        writer.write(library.getId() + " " + library.getBooksIds().size() + "\n");
+                        writer.write(library.getId() + " " + booksToTake.size() + "\n");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
 
-                    ArrayList<Integer> bookIdsSorted = library.getBooksIds();
-                    bookIdsSorted.sort(Comparator.comparing(libraryId -> library.getBooksScore().get(libraryId)));
 
-                    String sortedBookLine = "";
-                    for (Integer bookId : bookIdsSorted) {
-                        sortedBookLine = sortedBookLine.concat(bookId + " ");
-                    }
-
+                    // Write books id sorted
                     try {
+                        String sortedBookLine = "";
+                        for (Integer bookId : booksToTake) {
+                            sortedBookLine = sortedBookLine.concat(bookId + " ");
+                        }
                         writer.write(sortedBookLine.trim() + "\n");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
 
-                    // remove books previously sent
+                    // Remove library seen
                     libraries.remove(0);
-                    if (libraries.size() == 0) {
-                        break;
+                    if (libraries.size() > 0) {
+                        // Remove books previously sent and reorder
+                        for (Library newLibrary : libraries) {
+                            newLibrary.removeBooks(booksToTake);
+                        }
+                        libraries.sort(Comparator.comparing(x -> -x.getLibraryScore()));
                     }
-                    libraries.forEach(library1 -> {
-                        library1.removeBooks(bookIdsSorted);
-                    });
-                    libraries.forEach(Library::calculateSum);
-                    int size1 = libraries.size();
-                    Global.averageFirstComponent = Global.averageFirstComponent / size1;
-                    Global.averageSecondComponent = Global.averageSecondComponent / size1;
-                    double firstComponentStd1 = 0;
-                    double secondComponentStd1 = 0;
-                    for (Library library1 : libraries) {
-                        firstComponentStd1 += Math.pow(library1.getFirstComponent() - Global.averageFirstComponent, 2);
-                        secondComponentStd1 += Math.pow(library1.getSecondComponent() - Global.averageSecondComponent, 2);
-                    }
-                    Global.stdFirstComponent = Math.sqrt(firstComponentStd1 / size1);
-                    Global.stdSecondComponent = Math.sqrt(secondComponentStd1 / size1);
-                    libraries.sort(Comparator.comparing(Library::getLibraryScore));
                 }
             }
 
             writer.close();
-            System.out.println(realLibraryCount);
+            System.out.println("Put this in first line: " + realLibraryCount);
         } catch (IOException e) {
             e.printStackTrace();
         }
