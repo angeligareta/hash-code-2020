@@ -113,8 +113,8 @@ class Library {
 public class HashCode {
 
     public static void main(String[] args) throws IOException {
-        final String inputFileName = "./data/c_incunabula.txt";
-        final String outputFileName = "./data/solution-c.txt";
+        final String inputFileName = "./data/b_read_on.txt";
+        final String outputFileName = "./data/solution-b.txt";
 
         int bookNumber = 0;
         int totalNumberOfDays = 0;
@@ -172,12 +172,9 @@ public class HashCode {
         try {
             writer.write(libraries.size() + "\n");
             int realLibraryCount = 0;
-            int libraryCount = 0;
 
             while (libraries.size() > 0) {
-                Library library = libraries.get(libraryCount);
-
-                libraryCount += 1;
+                Library library = libraries.get(0);
                 if (library.getBooksIds().size() > 0) {
                     realLibraryCount += 1;
 
@@ -202,9 +199,12 @@ public class HashCode {
                     }
 
                     // remove books previously sent
-                    libraries = (ArrayList<Library>) libraries.subList(1, libraries.size());
+                    libraries.remove(0);
+                    if (libraries.size() == 0) {
+                        break;
+                    }
                     libraries.forEach(library1 -> {
-                        library1.removeBooks(library.getBooksIds());
+                        library1.removeBooks(bookIdsSorted);
                     });
                     libraries.forEach(Library::calculateSum);
                     int size1 = libraries.size();
