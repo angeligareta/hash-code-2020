@@ -70,6 +70,16 @@ class Library {
     public HashMap<Integer, Integer> getBooksScore() {
         return booksIdScore;
     }
+
+    public void removeBooks(ArrayList<Integer> booksIdsToRemove) {
+        ArrayList<Integer> oldBooksIds = this.getBooksIds();
+        for (Integer id : booksIdsToRemove) {
+            if (oldBooksIds.contains(id)) {
+                this.booksIds.remove(id);
+                this.booksIdScore.remove(id);
+            }
+        }
+    }
 }
 
 public class HashCode {
@@ -89,7 +99,6 @@ public class HashCode {
             while (dataset_reader.hasNextLine()) {
                 String nextLine = dataset_reader.nextLine();
                 String[] description = nextLine.split(" ");
-                System.out.println(description.length);
                 bookNumber = Integer.parseInt(description[0]);
                 int libraryNumber = Integer.parseInt(description[1]);
                 maxDays = Integer.parseInt(description[2]);
@@ -121,11 +130,9 @@ public class HashCode {
         libraries.sort(Comparator.comparing(Library::getLibraryScore));
 
         try {
-
-            System.out.println(libraries.size());
             writer.write(libraries.size() + "\n");
-            libraries.forEach(library -> {
-                System.out.print(library.getId() + " " + library.getBooksIds().size() + "\n");
+            int libraryCount = 0;
+            for (Library library : libraries) {
                 try {
                     writer.write(library.getId() + " " + library.getBooksIds().size() + "\n");
                 } catch (IOException e) {
@@ -135,22 +142,25 @@ public class HashCode {
                 ArrayList<Integer> bookIdsSorted = library.getBooksIds();
                 bookIdsSorted.sort(Comparator.comparing(libraryId -> library.getBooksScore().get(libraryId)));
 
-                bookIdsSorted.forEach(id -> System.out.print(id + " "));
-                bookIdsSorted.forEach(id -> {
-                    try {
-                        writer.write(id + " ");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
+                String sortedBookLine = "";
+                for (Integer bookId : bookIdsSorted) {
+                    sortedBookLine = sortedBookLine.concat(bookId + " ");
+                }
 
-                System.out.print("\n");
                 try {
-                    writer.write("\n");
+                    writer.write(sortedBookLine.trim() + "\n");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            });
+
+                // remove books previously sent
+                libraryCount += 1;
+                libraries.subList(libraryCount, libraries.size()).forEach(library1 -> {
+                    library1.removeBooks(library.getBooksIds());
+                });
+
+            }
+
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
