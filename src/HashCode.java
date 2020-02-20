@@ -174,9 +174,7 @@ public class HashCode {
             int realLibraryCount = 0;
             int libraryCount = 0;
 
-            int librariesSize = libraries.size();
-
-            while (libraryCount < librariesSize) {
+            while (libraries.size() > 0) {
                 Library library = libraries.get(libraryCount);
 
                 libraryCount += 1;
@@ -204,11 +202,12 @@ public class HashCode {
                     }
 
                     // remove books previously sent
-                    libraries.subList(libraryCount, libraries.size()).forEach(library1 -> {
+                    libraries = (ArrayList<Library>) libraries.subList(1, libraries.size());
+                    libraries.forEach(library1 -> {
                         library1.removeBooks(library.getBooksIds());
                     });
                     libraries.forEach(Library::calculateSum);
-                    int size1 = libraries.size() - libraryCount;
+                    int size1 = libraries.size();
                     Global.averageFirstComponent = Global.averageFirstComponent / size1;
                     Global.averageSecondComponent = Global.averageSecondComponent / size1;
                     double firstComponentStd1 = 0;
