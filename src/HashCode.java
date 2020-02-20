@@ -6,6 +6,14 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Scanner;
 
+class Global {
+    static int averageFirstComponent = 0;
+    static double averageSecondComponent = 0;
+    static double stdFirstComponent = 0;
+    static double stdSecondComponent = 0;
+}
+
+
 class Book {
     private final int id;
     private final int score;
@@ -52,13 +60,31 @@ class Library {
         }
     }
 
-    public Double getLibraryScore() {
+    public int getFirstComponent() {
         int bookScoreSum = 0;
         for (Integer bookScore : this.booksIdScore.values()) {
             bookScoreSum += bookScore;
         }
+        return bookScoreSum;
+    }
 
-        return 0.5 * bookScoreSum + 0.5 * this.signupTime /  this.totalNumberOfDays; //- Math.pow(2, this.signupTime);
+    public Double getSecondComponent() {
+        return (double) this.totalNumberOfDays / (double) this.signupTime;
+    }
+
+    public void calculateSum() {
+        Global.averageFirstComponent += getFirstComponent();
+        Global.averageSecondComponent += getSecondComponent();
+    }
+
+    public Double getLibraryScore() {
+//        System.out.println("Book Score Sum");
+//        System.out.println(firstComponent);
+//        System.out.println("Second component");
+//        System.out.println(secondComponent);
+
+        return 0.5 * ((getFirstComponent() - Global.averageFirstComponent) / Global.stdFirstComponent) +
+                0.5 * ((getSecondComponent() - Global.averageSecondComponent) / Global.stdSecondComponent); //- Math.pow(2, this.signupTime);
     }
 
     public Integer getId() {
@@ -129,14 +155,28 @@ public class HashCode {
 
         FileWriter writer = new FileWriter(outputFileName);
 
+        libraries.forEach(Library::calculateSum);
+        int size = libraries.size();
+        Global.averageFirstComponent = Global.averageFirstComponent / size;
+        Global.averageSecondComponent = Global.averageSecondComponent / size;
+        double firstComponentStd = 0;
+        double secondComponentStd = 0;
+        for (Library library : libraries) {
+            firstComponentStd += Math.pow(library.getFirstComponent() - Global.averageFirstComponent, 2);
+            secondComponentStd += Math.pow(library.getSecondComponent() - Global.averageSecondComponent, 2);
+        }
+        Global.stdFirstComponent = Math.sqrt(firstComponentStd / size);
+        Global.stdSecondComponent = Math.sqrt(secondComponentStd / size);
         libraries.sort(Comparator.comparing(Library::getLibraryScore));
 
         try {
             writer.write(libraries.size() + "\n");
+            int realLibraryCount = 0;
             int libraryCount = 0;
             for (Library library : libraries) {
                 libraryCount += 1;
                 if (library.getBooksIds().size() > 0) {
+                    realLibraryCount += 1;
 
                     try {
                         writer.write(library.getId() + " " + library.getBooksIds().size() + "\n");
@@ -166,6 +206,7 @@ public class HashCode {
             }
 
             writer.close();
+            System.out.println(realLibraryCount);
         } catch (IOException e) {
             e.printStackTrace();
         }
