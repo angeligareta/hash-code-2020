@@ -45,7 +45,7 @@ class Library {
             // Put first seen values (omitting them as we are looping)
             return Double.MAX_VALUE;
         } else {
-            return this.scoreSum + Math.pow(this.booksPerDay, 1.3) / Math.pow(this.signupTime, 2);
+            return this.scoreSum / Math.pow(this.signupTime, 2);
         }
     }
 
