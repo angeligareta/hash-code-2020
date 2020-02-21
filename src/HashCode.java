@@ -36,12 +36,14 @@ class Library {
     private final int signupTime;
     private final int booksPerDay;
     private final int totalNumberOfDays;
+    private boolean seen;
 
     Library(Integer id, String[] books, String[] booksScore, int scanTime, int booksPerDay, int totalNumberOfDays) {
         this.id = id;
         this.signupTime = scanTime;
         this.booksPerDay = booksPerDay;
         this.totalNumberOfDays = totalNumberOfDays;
+        this.seen = false;
 
         this.booksIds = new ArrayList<Integer>();
         this.booksIdScore = new HashMap<Integer, Integer>();
@@ -57,6 +59,10 @@ class Library {
         }
     }
 
+    public void setSeen() {
+        this.seen = true;
+    }
+
     public int getFirstComponent() {
         int bookScoreSum = 0;
         for (Integer bookScore : this.booksIdScore.values()) {
@@ -66,8 +72,7 @@ class Library {
     }
 
     public Double getSecondComponent() {
-//        return (double) this.totalNumberOfDays / (double) this.signupTime;
-        return 0.0;
+        return (double) this.totalNumberOfDays / (double) this.signupTime;
     }
 
     public void calculateSum() {
@@ -83,7 +88,11 @@ class Library {
 
 //        return 0.5 * ((getFirstComponent() - Global.averageFirstComponent) / Global.stdFirstComponent) +
 //                0.5 * ((getSecondComponent() - Global.averageSecondComponent) / Global.stdSecondComponent); //- Math.pow(2, this.signupTime);
-        return 0.5 * getFirstComponent() + 0.5 * getSecondComponent();
+        if (seen) {
+            return Double.MAX_VALUE;
+        } else {
+            return 0.5 * getFirstComponent() + 0.5 * getSecondComponent();
+        }
     }
 
     public Integer getId() {
@@ -111,10 +120,7 @@ class Library {
 
 public class HashCode {
 
-    public static void main(String[] args) throws IOException {
-        final String inputFileName = "./data/e_so_many_books.txt";
-        final String outputFileName = "./data/solution-e.txt";
-
+    public static void calculateSolution(String inputFileName, String outputFileName) throws IOException {
         int bookNumber = 0;
         int totalNumberOfDays = 0;
         ArrayList<Library> libraries = new ArrayList<>();
@@ -131,7 +137,7 @@ public class HashCode {
                 int libraryNumber = Integer.parseInt(description[1]);
                 totalNumberOfDays = Integer.parseInt(description[2]);
 
-                maxNumberOfBooksToTake = (int) (bookNumber * 0.7);
+                //maxNumberOfBooksToTake = (int) (bookNumber * 0.7);
 
                 nextLine = dataset_reader.nextLine();
                 String[] bookScore = nextLine.split(" ");
@@ -174,9 +180,11 @@ public class HashCode {
         try {
             writer.write(libraries.size() + "\n");
             int realLibraryCount = 0;
+            int libraryCount = 0;
 
-            while (libraries.size() > 0) {
-                Library library = libraries.get(0);
+            while (libraryCount < libraries.size()) {
+                Library library = libraries.get(libraryCount);
+                libraries.get(libraryCount).setSeen();
 
                 // Omit libraries without books
                 if (library.getBooksIds().size() > 0) {
@@ -185,17 +193,17 @@ public class HashCode {
 
                     // Sort by books with more score
                     ArrayList<Integer> bookIdsSorted = library.getBooksIds();
-                    bookIdsSorted.sort(Comparator.comparing(libraryId -> library.getBooksScore().get(libraryId)));
+                    bookIdsSorted.sort(Comparator.comparing(bookId -> -library.getBooksScore().get(bookId)));
 
-                    List<Integer> booksToTake = bookIdsSorted.subList(0, bookIdsSorted.size());
+//                    List<Integer> booksToTake = bookIdsSorted.subList(0, bookIdsSorted.size());
 
-                    if (bookIdsSorted.size() > maxNumberOfBooksToTake) {
-                        booksToTake = booksToTake.subList(0, maxNumberOfBooksToTake);
-                    }
+//                    if (bookIdsSorted.size() > maxNumberOfBooksToTake) {
+//                        booksToTake = booksToTake.subList(0, maxNumberOfBooksToTake);
+//                    }
 
                     // Show library id and number of books
                     try {
-                        writer.write(library.getId() + " " + booksToTake.size() + "\n");
+                        writer.write(library.getId() + " " + bookIdsSorted.size() + "\n");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -204,7 +212,7 @@ public class HashCode {
                     // Write books id sorted
                     try {
                         String sortedBookLine = "";
-                        for (Integer bookId : booksToTake) {
+                        for (Integer bookId : bookIdsSorted) {
                             sortedBookLine = sortedBookLine.concat(bookId + " ");
                         }
                         writer.write(sortedBookLine.trim() + "\n");
@@ -213,15 +221,15 @@ public class HashCode {
                     }
 
                     // Remove library seen
-                    libraries.remove(0);
-                    if (libraries.size() > 0) {
-                        // Remove books previously sent and reorder
-                        for (Library newLibrary : libraries) {
-                            newLibrary.removeBooks(booksToTake);
-                        }
-                        libraries.sort(Comparator.comparing(x -> -x.getLibraryScore()));
+                    // Remove books previously sent and reorder
+                    for (Library newLibrary : libraries.subList(libraryCount + 1, libraries.size())) {
+                        newLibrary.removeBooks(bookIdsSorted);
                     }
+                    libraries.sort(Comparator.comparing(x -> -x.getLibraryScore()));
                 }
+
+                // Increment count
+                libraryCount += 1;
             }
 
             writer.close();
@@ -231,5 +239,20 @@ public class HashCode {
         }
 
 
+    }
+
+    public static void main(String[] args) throws IOException {
+        calculateSolution("./data/a_example.txt", "./data/solution-a.txt");
+        System.out.println("A Done !");
+        calculateSolution("./data/b_read_on.txt", "./data/solution-b.txt");
+        System.out.println("B Done !");
+        calculateSolution("./data/c_incunabula.txt", "./data/solution-c.txt");
+        System.out.println("C Done !");
+        //calculateSolution("./data/d_tough_choices.txt", "./data/solution-d.txt");
+        System.out.println("D Done !");
+        calculateSolution("./data/e_so_many_books.txt", "./data/solution-e.txt");
+        System.out.println("E Done !");
+        calculateSolution("./data/f_libraries_of_the_world.txt", "./data/solution-f.txt");
+        System.out.println("F Done !");
     }
 }
