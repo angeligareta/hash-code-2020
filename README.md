@@ -1,10 +1,6 @@
 <h1 align="center">Hash Code 2020</h1>
 <h4 align="center">Online qualification round of #HashCode2020, a Google programming competition to solve a team-based challenge</h4>
 
-<p align="center">
-  <img alt="GitHub contributors" src="https://img.shields.io/github/contributors/angeligareta/hash-code-2020?style=flat-square">
-</p>
-
 ## Problem statement
 Books allow us to discover fantasy worlds and beer understand the world we live in.
 They enable us to learn about everything from photography to compilers… and of
